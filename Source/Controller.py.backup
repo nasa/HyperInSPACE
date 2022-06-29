@@ -26,22 +26,6 @@ class Controller:
         self.ancillaryData = HDFDataset()
         self.ancillaryData.id = 'None'
 
-
-    def processAncData(self,fp):
-        ''' Read in the ancillary field data file '''
-
-        # Only populate if it's empty (i.e. preserve from list of files being processed)
-        if self.ancillaryData.id == 'None':
-
-            if fp is None or fp=='':
-                return None
-            elif not os.path.isfile(fp):
-                print("Specified ancillary file not found: " + fp)
-                return None
-            self.ancillaryData = AncillaryReader.readAncillary(fp)
-
-        return self.ancillaryData
-
     @staticmethod
     def writeReport(fileName, pathOut, outFilePath, level, inFilePath):
         print('Writing PDF Report...')
@@ -233,6 +217,18 @@ class Controller:
             else:
                 del calibrationMap[key]
         return calibrationMap
+
+    @staticmethod
+    def processAncData(fp):
+        ''' Read in the ancillary field data file '''
+
+        if fp is None or fp=='':
+            return None
+        elif not os.path.isfile(fp):
+            print("Specified ancillary file not found: " + fp)
+            return None
+        ancillaryData = AncillaryReader.readAncillary(fp)
+        return ancillaryData
 
     @staticmethod
     def processL1a(inFilePath, outFilePath, calibrationMap):
@@ -475,7 +471,8 @@ class Controller:
 
     # Process every file in a list of files 1 level
     @staticmethod
-    def processSingleLevel(control,pathOut, inFilePath, calibrationMap, level):
+    # def processSingleLevel(pathOut, inFilePath, calibrationMap, level, ancFile=None):
+    def processSingleLevel(pathOut, inFilePath, calibrationMap, level):
         # Find the absolute path to the output directory
         pathOut = os.path.abspath(pathOut)
         # inFilePath is a singleton file complete with path
@@ -520,7 +517,9 @@ class Controller:
 
             elif level == "L1AQC":
 
-                ancillaryData = Controller.processAncData(control,MainConfig.settings["metFile"])
+                # Only populate if it's empty (i.e. preserve from list of files being processed)
+                if self.ancillaryData.id == 'None':
+                    ancillaryData = Controller.processAncData(MainConfig.settings["metFile"])
 
                 # If called locally from Controller and not AnomalyDetection.py, then
                 #   try to load the parameter file for this cruise/configuration and update
@@ -628,35 +627,41 @@ class Controller:
     @staticmethod
     def processFilesMultiLevel(pathOut,inFiles, calibrationMap, ancFile=None):
         print("processFilesMultiLevel")
-
-        control = Controller()
+        # t0 = time.time()
         for fp in inFiles:
             print("Processing: " + fp)
 
-            if Controller.processSingleLevel(control,pathOut, fp, calibrationMap, 'L1A'):
+            # if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1A', ancFile):
+            if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1A'):
                 # Going from L0 to L1A, need to account for the underscore
                 inFileName = os.path.split(fp)[1]
                 fileName = os.path.join('L1A',f'{os.path.splitext(inFileName)[0]}'+'_L1A.hdf')
                 fp = os.path.join(os.path.abspath(pathOut),fileName)
-                if Controller.processSingleLevel(control,pathOut, fp, calibrationMap, 'L1AQC'):
+                # if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1AQC', ancFile):
+                if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1AQC'):
                     inFileName = os.path.split(fp)[1]
                     fileName = os.path.join('L1AQC',f"{os.path.splitext(inFileName)[0].rsplit('_',1)[0]}"+'_L1AQC.hdf')
                     fp = os.path.join(os.path.abspath(pathOut),fileName)
-                    if Controller.processSingleLevel(control,pathOut, fp, calibrationMap, 'L1B'):
+                    # if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1B', ancFile):
+                    if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1B'):
                         inFileName = os.path.split(fp)[1]
                         fileName = os.path.join('L1B',f"{os.path.splitext(inFileName)[0].rsplit('_',1)[0]}"+'_L1B.hdf')
                         fp = os.path.join(os.path.abspath(pathOut),fileName)
-                        if Controller.processSingleLevel(control,pathOut, fp, calibrationMap, 'L1BQC'):
+                        # if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1BQC', ancFile):
+                        if Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L1BQC'):
                             inFileName = os.path.split(fp)[1]
                             fileName = os.path.join('L1BQC',f"{os.path.splitext(inFileName)[0].rsplit('_',1)[0]}"+'_L1BQC.hdf')
                             fp = os.path.join(os.path.abspath(pathOut),fileName)
-                            Controller.processSingleLevel(control,pathOut, fp, calibrationMap, 'L2')
+                            # Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L2', ancFile)
+                            Controller.processSingleLevel(pathOut, fp, calibrationMap, 'L2')
         print("processFilesMultiLevel - DONE")
+        # t1 = time.time()
+        # print(f'Elapsed time: {(t1-t0)/60} minutes')
 
 
     # Process every file in a list of files 1 level
     @staticmethod
-    def processFilesSingleLevel(control,pathOut, inFiles, calibrationMap, level, ancFile=None):
+    def processFilesSingleLevel(pathOut, inFiles, calibrationMap, level, ancFile=None):
         # print("processFilesSingleLevel")
         for fp in inFiles:
             # Check that the input file matches what is expected for this processing level
@@ -680,8 +685,8 @@ class Controller:
 
             print("Processing: " + fp)
             # try:
-            # Controller.processSingleLevel(control,pathOut, fp, calibrationMap, level, ancFile)
-            Controller.processSingleLevel(control,pathOut, fp, calibrationMap, level)
+            # Controller.processSingleLevel(pathOut, fp, calibrationMap, level, ancFile)
+            Controller.processSingleLevel(pathOut, fp, calibrationMap, level)
             # except OSError:
             #     print("Unable to process that file due to an operating system error. Try again.")
         print("processFilesSingleLevel - DONE")

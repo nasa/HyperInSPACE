@@ -943,7 +943,11 @@ class AnomAnalWindow(QtWidgets.QDialog):
                 print('Complete')
 
     def processButtonPressed(self):
+        ''' Not recommended except for testing '''
         # Run L1AQC processing for this file
+
+        print('Processing files from Anomaly Detection window is recommended only for testing.')
+        print('Ancillary data will be reloaded with each file, which is slow.')
 
         # inFilePath = os.path.join(self.inputDirectory, 'L1A', self.fileName+'.hdf')
         fileBaseName = self.fileName.split('_L1A')[0]
@@ -960,7 +964,10 @@ class AnomAnalWindow(QtWidgets.QDialog):
         calPath = os.path.join("Config", calFolder)
         print("Read CalibrationFile ", calPath)
         calibrationMap = CalibrationFileReader.read(calPath)
-        ancillaryData = Controller.processAncData(MainConfig.settings["metFile"])
+
+        # Creates an empty controller object every time:
+        control = Controller()
+        ancillaryData = Controller.processAncData(control,MainConfig.settings["metFile"])
         root = Controller.processL1aqc(inFilePath, outFilePath, calibrationMap, ancillaryData)
 
         # In case of processing failure, write the report at this Process level, unless running stations

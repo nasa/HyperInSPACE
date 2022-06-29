@@ -288,10 +288,6 @@ class Window(QtWidgets.QWidget):
         print('Edit Config Dialogue')
         configFileName = self.configComboBox.currentText()
 
-        # ConfigFile.settings['AncFile'] = self.ancFileLineEdit.text()
-        # if ConfigFile.settings['AncFile'] == '':
-        #     ConfigFile.settings['AncFile'] = None
-
         inputDir = self.inputDirectory
         configPath = os.path.join('Config', configFileName)
         if os.path.isfile(configPath):
@@ -430,7 +426,8 @@ class Window(QtWidgets.QWidget):
             print('Bad output directory.')
             return
 
-        Controller.processFilesSingleLevel(self.outputDirectory,fileNames, calibrationMap, level, ancFile)
+        control = Controller() # Init control object to hold, eg., ancData
+        Controller.processFilesSingleLevel(control,self.outputDirectory,fileNames, calibrationMap, level, ancFile)
         t1Single = time.time()
         print(f'Time elapsed: {str(round((t1Single-t0Single)/60))} minutes')
 
@@ -605,7 +602,8 @@ class Command():
             print('Bad output directory.')
             return
 
-        Controller.processFilesSingleLevel(self.outputDirectory, fileNames, calibrationMap, level, self.ancFile)
+        control = Controller() # Init control object to hold, eg., ancData
+        Controller.processFilesSingleLevel(control, self.outputDirectory, fileNames, calibrationMap, level, self.ancFile)
         t1Single = time.time()
         print(f'Time elapsed: {str(round((t1Single-t0Single)/60))} minutes')
 

@@ -205,7 +205,10 @@ class ProcessL1a:
                             Utilities.writeLogFile(msg)
                             return None
                         else:
-                            msg = f'SZA passed filter: {round(90-np.nanmax(elevation))}'
+                            if np.all(np.isnan(elevation)):
+                                msg = 'All ELEVATION data are NaN. Proceed and correct in L1AQC.'
+                            else:
+                                msg = f'SZA passed filter: {round(90-np.nanmax(elevation))}'
                             print(msg)
                             Utilities.writeLogFile(msg)
                 else:

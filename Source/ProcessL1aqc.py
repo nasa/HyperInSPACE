@@ -563,13 +563,16 @@ class ProcessL1aqc:
                 # It may also be set here for when no SolarTracker is present and it's not included in the
                 # ancillary data. See below.
                 home = float(ConfigFile.settings["fL1aqcRotatorHomeAngle"])
+
                 sunAzimuth = gp.getDataset("AZIMUTH").data["SUN"]# strips off dtype name
+                sunZenith = 90 - gp.getDataset("ELEVATION").data["SUN"]
+
                 gp.addDataset("SOLAR_AZ")
                 gp.datasets["SOLAR_AZ"].data = np.array(sunAzimuth, dtype=[('NONE', '<f8')])
                 # gp.datasets["SOLAR_AZ"].data = sunAzimuth
                 # sunAzimuth = sunAzimuth["SUN"]
                 del(gp.datasets["AZIMUTH"])
-                sunZenith = 90 - gp.getDataset("ELEVATION").data["SUN"]
+
                 # sunZenith["None"] = 90 - sunZenith["SUN"]
                 gp.addDataset("SZA")
                 gp.datasets["SZA"].data = np.array(sunZenith, dtype=[('NONE', '<f8')])
